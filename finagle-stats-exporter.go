@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	//"github.com/cactus/go-statsd-client/statsd"
+	"github.com/cactus/go-statsd-client/statsd"
 	"io/ioutil"
 	"net/http"
 )
@@ -22,6 +22,12 @@ func main() {
 
 	fmt.Printf("collecting stats from %s to %s\n", *finagle_server, *statsd_server)
 
+	client, err := statsd.New(*statsd_server, "finagle-stats-exporter")
+	if err != nil {
+		fmt.Printf("error fetching stats %s", err)
+	}
+	defer client.Close()
+
 	resp, err := http.Get(fmt.Sprintf("http://%s/stats.json", *finagle_server))
 	if err != nil {
 		fmt.Printf("error fetching stats %s", err)
@@ -37,6 +43,20 @@ func main() {
 	err = json.Unmarshal(body, &stats)
 	if err != nil {
 		fmt.Printf("error reading json %s", err)
+	}
+
+	for k, v := range stats.Counters {
+		err = client.Inc(k, int64(v), 1.0)
+		if err != nil {
+			fmt.Printf("Error sending metric: %+v\n", err)
+		}
+	}
+
+	for k, v := range stats.Gauges {
+		err = client.Gauge(k, int64(v), 1.0)
+		if err != nil {
+			fmt.Printf("Error sending metric: %+v\n", err)
+		}
 	}
 
 }
