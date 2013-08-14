@@ -1,6 +1,6 @@
 # Finagle Stats Exporter
 
-A simple tool that takes stats output from finagle and ships it to statsd.
+A simple tool that takes stats output from finagle and ships it to statsd, meant to be run from crond.
 
 ### Installation
     go get github.com/capotej/finagle-stats-exporter 
