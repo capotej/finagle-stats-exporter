@@ -17,11 +17,16 @@ type FinagleStats struct {
 	Metrics  map[string]int
 }
 
-func main() {
-	var statsd_server = flag.String("statsd_server", "localhost:8125", "statsd server:port")
-	var finagle_server = flag.String("finagle_server", "localhost:9990", "finagle stats server:port")
-	var stats_path = flag.String("stats_path", "stats.json", "finagle stat path")
+func init() {
 	flag.Parse()
+}
+
+func main() {
+	var (
+		statsd_server  = flag.String("statsd_server", "localhost:8125", "statsd server:port")
+		finagle_server = flag.String("finagle_server", "localhost:9990", "finagle stats server:port")
+		stats_path     = flag.String("stats_path", "stats.json", "finagle stat path")
+	)
 
 	fmt.Printf("collecting stats from %s to %s\n", *finagle_server, *statsd_server)
 
