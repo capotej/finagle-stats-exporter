@@ -18,32 +18,34 @@ type FinagleStats struct {
 }
 
 func main() {
-	var statsd_server = flag.String("statsd_server", "localhost:8125", "statsd server \"localhost:8125\"")
-	var finagle_server = flag.String("finagle_server", "localhost:9990", "finagle server \"localhost:8888\"")
+	var statsd_server = flag.String("statsd_server", "localhost:8125", "statsd server:port")
+	var finagle_server = flag.String("finagle_server", "localhost:9990", "finagle stats server:port")
+	var stats_path = flag.String("stats_path", "stats.json", "finagle stat path")
+	flag.Parse()
 
 	fmt.Printf("collecting stats from %s to %s\n", *finagle_server, *statsd_server)
 
 	client, err := statsd.New(*statsd_server, "finagle-stats-exporter")
 	if err != nil {
-		log.Fatalf("error fetching stats %s", err)
+		log.Fatalf("Error connecting to statsd server %s", err)
 	}
 	defer client.Close()
 
-	resp, err := http.Get(fmt.Sprintf("http://%s/stats.json", *finagle_server))
+	resp, err := http.Get(fmt.Sprintf("http://%s/%s", *finagle_server, *stats_path))
 	if err != nil {
-		log.Fatalf("error fetching stats %s", err)
+		log.Fatalf("Error fetching stats %s", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalf("error reading stats %s", err)
+		log.Fatalf("Error reading stats %s", err)
 	}
 
 	var stats FinagleStats
 	err = json.Unmarshal(body, &stats)
 	if err != nil {
-		log.Fatalf("error reading json %s", err)
+		log.Fatalf("Error parsing json %s", err)
 	}
 
 	for k, v := range stats.Counters {
