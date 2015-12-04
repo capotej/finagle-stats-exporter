@@ -18,3 +18,4 @@ Just the binary:
       -finagle_server="localhost:9990": finagle stats server:port
       -stats_path="stats.json": finagle stat path
       -statsd_server="localhost:8125": statsd server:port
+      -metrics="true": metrics style finagle stats (non-ostrich)"
