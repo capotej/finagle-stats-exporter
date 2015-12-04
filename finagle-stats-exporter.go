@@ -21,14 +21,22 @@ var (
 	statsd_server  = flag.String("statsd_server", "localhost:8125", "statsd server:port")
 	finagle_server = flag.String("finagle_server", "localhost:9990", "finagle stats server:port")
 	stats_path     = flag.String("stats_path", "stats.json", "finagle stat path")
+	metrics        = flag.Bool("metrics", false, "metrics style finagle stats (non-ostrich)")
 )
 
 func init() {
 	flag.Parse()
 }
 
+func statsType() string {
+	if *metrics {
+		return "metrics-style"
+	}
+	return "ostrich-style"
+}
+
 func main() {
-	fmt.Printf("collecting stats from %s to %s\n", *finagle_server, *statsd_server)
+	fmt.Printf("collecting %s stats from %s to %s\n", statsType(), *finagle_server, *statsd_server)
 
 	client, err := statsd.New(*statsd_server, "finagle-stats-exporter")
 	if err != nil {
@@ -47,24 +55,40 @@ func main() {
 		log.Fatalf("Error reading stats %s", err)
 	}
 
-	var stats FinagleStats
-	err = json.Unmarshal(body, &stats)
-	if err != nil {
-		log.Fatalf("Error parsing json %s", err)
-	}
+	if *metrics {
+		var stats map[string]float64
 
-	for k, v := range stats.Counters {
-		err = client.Inc(k, int64(v), 1.0)
+		err = json.Unmarshal(body, &stats)
 		if err != nil {
-			log.Fatalf("Error sending metric: %+v\n", err)
+			log.Fatalf("Error parsing json %s", err)
+		}
+
+		for k, v := range stats {
+			err = client.Inc(k, int64(v), 1.0)
+			if err != nil {
+				log.Fatalf("Error sending metric: %+v\n", err)
+			}
+		}
+	} else {
+		var stats FinagleStats
+
+		err = json.Unmarshal(body, &stats)
+		if err != nil {
+			log.Fatalf("Error parsing json %s", err)
+		}
+
+		for k, v := range stats.Counters {
+			err = client.Inc(k, int64(v), 1.0)
+			if err != nil {
+				log.Fatalf("Error sending metric: %+v\n", err)
+			}
+		}
+
+		for k, v := range stats.Gauges {
+			err = client.Gauge(k, int64(v), 1.0)
+			if err != nil {
+				fmt.Printf("Error sending metric: %+v\n", err)
+			}
 		}
 	}
-
-	for k, v := range stats.Gauges {
-		err = client.Gauge(k, int64(v), 1.0)
-		if err != nil {
-			fmt.Printf("Error sending metric: %+v\n", err)
-		}
-	}
-
 }
