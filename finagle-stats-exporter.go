@@ -18,7 +18,7 @@ type FinagleStats struct {
 }
 
 var (
-	statsd_category = flag.String("statsd_category", "finagle-stats-exporter")
+	statsd_category = flag.String("statsd_category", "finagle-stats-exporter", "statsd category")
 	statsd_server   = flag.String("statsd_server", "localhost:8125", "statsd server:port")
 	finagle_server  = flag.String("finagle_server", "localhost:9990", "finagle stats server:port")
 	stats_path      = flag.String("stats_path", "stats.json", "finagle stat path")
