@@ -39,7 +39,7 @@ func statsType() string {
 func main() {
 	fmt.Printf("collecting %s stats from %s to %s\n", statsType(), *finagle_server, *statsd_server)
 
-	client, err := statsd.New(*statsd_server, statsd_category)
+	client, err := statsd.New(*statsd_server, *statsd_category)
 	if err != nil {
 		log.Fatalf("Error connecting to statsd server %s", err)
 	}
